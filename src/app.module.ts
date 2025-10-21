@@ -1,10 +1,23 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UsersModule } from './users/users.module';
+import { DatabaseModule } from './database/database.module';
+import { VehiculoModule } from './vehiculo/vehiculo.module';
+import { ParqueaderoModule } from './parqueadero/parqueadero.module';
+import { ConductorModule } from './conductor/conductor.module';
 
 @Module({
-  imports: [UsersModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+    DatabaseModule,
+    VehiculoModule,
+    ParqueaderoModule,
+    ConductorModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
