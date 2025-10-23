@@ -1,0 +1,105 @@
+@startuml
+title Diagrama de Clases - CampusParking UC (Implementación Actual)
+
+' Enumeración de roles
+enum Rol {
+  GUARDIA
+  ADMINISTRATIVO
+  SUPERUSUARIO
+}
+
+enum TipoVehiculo {
+  CARRO
+  MOTO
+}
+
+class Usuario {
+  - id: int
+  - nombre: String
+  - cedula: String
+  - correo: String
+  - rol: Rol
+  + autenticar()
+  + registrarEntrada(vehiculo: Vehiculo, parqueadero: Parqueadero)
+  + registrarSalida(vehiculo: Vehiculo)
+  + generarReporte()
+  + consultarHistorial()
+  + crearRegistro()
+  + editarRegistro()
+  + eliminarRegistro()
+}
+
+class Conductor {
+  - codigo: String <<PK>>
+  - nombre: String
+  - apellido: String
+  - correo: String <<unique>>
+  - telefono: String
+}
+
+class Vehiculo {
+  - placa: String <<PK>>
+  - tipo: TipoVehiculo
+  - marca: String
+  - modelo: String
+  - color: String
+  - fechaCaducidad: DateTime
+  - conductorCodigo: String <<FK>>
+}
+
+class Registro {
+  - id: int
+  - horaEntrada: DateTime
+  - horaSalida: DateTime
+  - estado: String
+  + registrarEntrada()
+  + registrarSalida()
+}
+
+class Parqueadero {
+  - id: int
+  - nombre: String
+  - direccion: String
+  - capacidad: int
+  - cuposDisponibles: int
+  + actualizarCupos()
+}
+
+' Relaciones
+Conductor "1" --> "N" Vehiculo : posee >
+Vehiculo "N" --> "N" Registro : genera >
+Usuario "1" --> "N" Registro : registra >
+Parqueadero "1" --> "N" Registro : pertenece >
+Usuario --> Rol : tiene >
+Vehiculo --> TipoVehiculo : tiene >
+
+note right of Conductor
+  **Claves Naturales:**
+  - codigo: Código único de 10 dígitos
+  - No usa ID autogenerado
+  - correo debe ser @ucaldas.edu.co
+end note
+
+note right of Vehiculo
+  **Claves Naturales:**
+  - placa: Identificador único
+  - No usa ID autogenerado
+  - conductorCodigo referencia a Conductor.codigo
+end note
+
+note bottom of Parqueadero
+  **Implementado:**
+  Endpoints completos CRUD + actualizarCupos
+end note
+
+note bottom of Usuario
+  **Pendiente de implementar:**
+  Módulo de autenticación y gestión de usuarios
+end note
+
+note bottom of Registro
+  **Pendiente de implementar:**
+  Módulo de registro de entrada/salida
+end note
+
+@enduml

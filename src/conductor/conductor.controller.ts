@@ -3,9 +3,11 @@ import { ConductorService } from './conductor.service';
 import { CreateConductorDto } from './dto/create-conductor.dto';
 import { UpdateConductorDto } from './dto/update-conductor.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('conductor')
 @Controller('conductor')
+@Public()
 export class ConductorController {
   constructor(private readonly conductorService: ConductorService) {}
 

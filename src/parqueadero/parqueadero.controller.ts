@@ -3,9 +3,11 @@ import { ParqueaderoService } from './parqueadero.service';
 import { CreateParqueaderoDto } from './dto/create-parqueadero.dto';
 import { UpdateParqueaderoDto } from './dto/update-parqueadero.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('parqueadero')
 @Controller('parqueadero')
+@Public()
 export class ParqueaderoController {
   constructor(private readonly parqueaderoService: ParqueaderoService) {}
 
