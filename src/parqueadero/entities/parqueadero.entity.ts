@@ -12,12 +12,23 @@ export class Parqueadero {
   direccion: string;
 
   @Column({ type: 'int' })
-  capacidad: number;
+  capacidadCarros: number;
 
   @Column({ type: 'int' })
-  cuposDisponibles: number;
+  capacidadMotos: number;
 
-  actualizarCupos(): void {
-    // Lógica para actualizar cupos disponibles
+  @Column({ type: 'int' })
+  cuposDisponiblesCarros: number;
+
+  @Column({ type: 'int' })
+  cuposDisponiblesMotos: number;
+
+  // Métodos de compatibilidad (deprecated pero útiles para migración)
+  get capacidad(): number {
+    return this.capacidadCarros + this.capacidadMotos;
+  }
+
+  get cuposDisponibles(): number {
+    return this.cuposDisponiblesCarros + this.cuposDisponiblesMotos;
   }
 }

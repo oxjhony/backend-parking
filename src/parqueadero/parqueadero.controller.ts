@@ -52,11 +52,19 @@ export class ParqueaderoController {
   }
 
   @Patch(':id/cupos')
-  @ApiOperation({ summary: 'Actualizar cupos disponibles del parqueadero' })
+  @ApiOperation({ summary: 'Actualizar cupos disponibles del parqueadero según tipo de vehículo' })
   @ApiParam({ name: 'id', example: 1 })
-  @ApiBody({ schema: { properties: { incremento: { type: 'number', example: -1 } }, required: ['incremento'] } })
+  @ApiBody({ 
+    schema: { 
+      properties: { 
+        tipoVehiculo: { type: 'string', enum: ['CARRO', 'MOTO'], example: 'CARRO' },
+        incremento: { type: 'number', example: -1 } 
+      }, 
+      required: ['tipoVehiculo', 'incremento'] 
+    } 
+  })
   @ApiResponse({ status: 200, description: 'Cupos disponibles actualizados.' })
-  actualizarCupos(@Param('id') id: string, @Body() body: { incremento: number }) {
-    return this.parqueaderoService.actualizarCuposDisponibles(+id, body.incremento);
+  actualizarCupos(@Param('id') id: string, @Body() body: { tipoVehiculo: string; incremento: number }) {
+    return this.parqueaderoService.actualizarCuposDisponibles(+id, body.tipoVehiculo as any, body.incremento);
   }
 }

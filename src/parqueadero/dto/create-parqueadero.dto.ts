@@ -12,15 +12,27 @@ export class CreateParqueaderoDto {
   @IsNotEmpty()
   direccion: string;
 
-  @ApiProperty({ example: 100 })
-  @IsInt()
-  @Min(1)
-  @IsNotEmpty()
-  capacidad: number;
-
-  @ApiProperty({ example: 80 })
+  @ApiProperty({ example: 50, description: 'Capacidad total de carros' })
   @IsInt()
   @Min(0)
   @IsNotEmpty()
-  cuposDisponibles: number;
+  capacidadCarros: number;
+
+  @ApiProperty({ example: 50, description: 'Capacidad total de motos' })
+  @IsInt()
+  @Min(0)
+  @IsNotEmpty()
+  capacidadMotos: number;
+
+  @ApiProperty({ example: 50, description: 'Cupos disponibles iniciales para carros' })
+  @IsInt()
+  @Min(0)
+  @IsNotEmpty()
+  cuposDisponiblesCarros: number;
+
+  @ApiProperty({ example: 50, description: 'Cupos disponibles iniciales para motos' })
+  @IsInt()
+  @Min(0)
+  @IsNotEmpty()
+  cuposDisponiblesMotos: number;
 }

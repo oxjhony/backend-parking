@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { CreateParqueaderoDto } from './dto/create-parqueadero.dto';
 import { UpdateParqueaderoDto } from './dto/update-parqueadero.dto';
 import { Parqueadero } from './entities/parqueadero.entity';
+import { TipoVehiculo } from '../vehiculo/enums/tipo-vehiculo.enum';
 
 @Injectable()
 export class ParqueaderoService {
@@ -14,8 +15,12 @@ export class ParqueaderoService {
 
   async create(createParqueaderoDto: CreateParqueaderoDto): Promise<Parqueadero> {
     // Validar que los cupos disponibles no sean mayores a la capacidad
-    if (createParqueaderoDto.cuposDisponibles > createParqueaderoDto.capacidad) {
-      throw new BadRequestException('Los cupos disponibles no pueden ser mayores a la capacidad');
+    if (createParqueaderoDto.cuposDisponiblesCarros > createParqueaderoDto.capacidadCarros) {
+      throw new BadRequestException('Los cupos disponibles de carros no pueden ser mayores a la capacidad de carros');
+    }
+
+    if (createParqueaderoDto.cuposDisponiblesMotos > createParqueaderoDto.capacidadMotos) {
+      throw new BadRequestException('Los cupos disponibles de motos no pueden ser mayores a la capacidad de motos');
     }
 
     const parqueadero = this.parqueaderoRepository.create(createParqueaderoDto);
@@ -41,12 +46,24 @@ export class ParqueaderoService {
   async update(id: number, updateParqueaderoDto: UpdateParqueaderoDto): Promise<Parqueadero> {
     const parqueadero = await this.findOne(id);
 
-    // Validar cupos disponibles si se actualiza
-    const capacidad = updateParqueaderoDto.capacidad ?? parqueadero.capacidad;
-    const cuposDisponibles = updateParqueaderoDto.cuposDisponibles ?? parqueadero.cuposDisponibles;
-    
-    if (cuposDisponibles > capacidad) {
-      throw new BadRequestException('Los cupos disponibles no pueden ser mayores a la capacidad');
+    // Validar cupos disponibles de carros si se actualiza
+    if (updateParqueaderoDto.capacidadCarros !== undefined || updateParqueaderoDto.cuposDisponiblesCarros !== undefined) {
+      const capacidadCarros = updateParqueaderoDto.capacidadCarros ?? parqueadero.capacidadCarros;
+      const cuposDisponiblesCarros = updateParqueaderoDto.cuposDisponiblesCarros ?? parqueadero.cuposDisponiblesCarros;
+      
+      if (cuposDisponiblesCarros > capacidadCarros) {
+        throw new BadRequestException('Los cupos disponibles de carros no pueden ser mayores a la capacidad de carros');
+      }
+    }
+
+    // Validar cupos disponibles de motos si se actualiza
+    if (updateParqueaderoDto.capacidadMotos !== undefined || updateParqueaderoDto.cuposDisponiblesMotos !== undefined) {
+      const capacidadMotos = updateParqueaderoDto.capacidadMotos ?? parqueadero.capacidadMotos;
+      const cuposDisponiblesMotos = updateParqueaderoDto.cuposDisponiblesMotos ?? parqueadero.cuposDisponiblesMotos;
+      
+      if (cuposDisponiblesMotos > capacidadMotos) {
+        throw new BadRequestException('Los cupos disponibles de motos no pueden ser mayores a la capacidad de motos');
+      }
     }
     
     Object.assign(parqueadero, updateParqueaderoDto);
@@ -59,18 +76,33 @@ export class ParqueaderoService {
     await this.parqueaderoRepository.remove(parqueadero);
   }
 
-  async actualizarCuposDisponibles(id: number, incremento: number): Promise<Parqueadero> {
+  async actualizarCuposDisponibles(id: number, tipoVehiculo: TipoVehiculo, incremento: number): Promise<Parqueadero> {
     const parqueadero = await this.findOne(id);
-    const nuevosCupos = parqueadero.cuposDisponibles + incremento;
 
-    if (nuevosCupos < 0) {
-      throw new BadRequestException('No hay cupos disponibles');
+    if (tipoVehiculo === TipoVehiculo.CARRO) {
+      const nuevosCupos = parqueadero.cuposDisponiblesCarros + incremento;
+
+      if (nuevosCupos < 0) {
+        throw new BadRequestException('No hay cupos disponibles para carros');
+      }
+
+      if (nuevosCupos > parqueadero.capacidadCarros) {
+        throw new BadRequestException('Los cupos disponibles de carros no pueden exceder la capacidad');
+      }
+
+      return await this.update(id, { cuposDisponiblesCarros: nuevosCupos });
+    } else {
+      const nuevosCupos = parqueadero.cuposDisponiblesMotos + incremento;
+
+      if (nuevosCupos < 0) {
+        throw new BadRequestException('No hay cupos disponibles para motos');
+      }
+
+      if (nuevosCupos > parqueadero.capacidadMotos) {
+        throw new BadRequestException('Los cupos disponibles de motos no pueden exceder la capacidad');
+      }
+
+      return await this.update(id, { cuposDisponiblesMotos: nuevosCupos });
     }
-
-    if (nuevosCupos > parqueadero.capacidad) {
-      throw new BadRequestException('Los cupos disponibles no pueden exceder la capacidad');
-    }
-
-    return await this.update(id, { cuposDisponibles: nuevosCupos });
   }
 }
