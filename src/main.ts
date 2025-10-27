@@ -5,6 +5,14 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Configuración de CORS
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN || '*', // Permite todos los orígenes en desarrollo
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+    allowedHeaders: 'Content-Type,Authorization,Accept',
+  });
+
   const config = new DocumentBuilder()
     .setTitle('Campus Parking API')
     .setDescription('API del sistema de parqueadero con autenticación JWT')
