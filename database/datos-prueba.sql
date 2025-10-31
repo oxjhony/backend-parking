@@ -3,6 +3,12 @@
 
 \c campus_parking
 
+-- Insertar usuarios de prueba
+-- Contraseña para todos: admin1234 (hasheada con bcrypt)
+INSERT INTO usuarios (nombre, cedula, correo, "claveEncriptada", rol) VALUES
+('Administrador Principal', '1234567890', 'admin@ucaldas.edu.co', '$2b$10$DJRTaHhSoC.8/LnjfSoGJeeOdeJ7vyZ4SXesz92NIEpjWFA9MOm5S', 'ADMINISTRADOR'),
+('super usuario', '1234567891', 'superusuario@ucaldas.edu.co', '$2b$10$DJRTaHhSoC.8/LnjfSoGJeeOdeJ7vyZ4SXesz92NIEpjWFA9MOm5S', 'SUPERUSUARIO');
+
 -- Insertar conductores de prueba
 INSERT INTO conductores (codigo, nombre, apellido, correo, telefono) VALUES
 ('0000028932', 'Juan Carlos', 'Pérez González', 'juan.perez@ucaldas.edu.co', '3101234567'),
@@ -31,6 +37,9 @@ INSERT INTO parqueaderos (nombre, direccion, "capacidadCarros", "capacidadMotos"
 ('Parqueadero jardñin botanico', 'Entrada jardín botanico', 40, 20, 37, 18);
 
 -- Verificar los datos insertados
+SELECT 'USUARIOS REGISTRADOS:' as info;
+SELECT id, nombre, cedula, correo, rol FROM usuarios;
+
 SELECT 'CONDUCTORES REGISTRADOS:' as info;
 SELECT * FROM conductores;
 
