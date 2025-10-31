@@ -20,7 +20,7 @@ export class CreateUsuarioDto {
   @ApiProperty({ example: 'Secr3t0!', description: 'Contraseña en texto plano (se encriptará)' })
   @IsString()
   @MinLength(6)
-  password: string;
+  contraseña: string;
 
   @ApiPropertyOptional({
     description: 'Rol del usuario',

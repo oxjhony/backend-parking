@@ -18,7 +18,7 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const usuario = await this.usuarioRepository.findOne({
       where: { correo: loginDto.correo },
-      select: ['id', 'nombre', 'correo', 'rol', 'passwordHash'],
+      select: ['id', 'nombre', 'correo', 'rol', 'claveEncriptada'],
     });
 
     if (!usuario) {
@@ -26,8 +26,8 @@ export class AuthService {
     }
 
     const passwordValid = await bcrypt.compare(
-      loginDto.password,
-      usuario.passwordHash,
+      loginDto.contraseña,
+      usuario.claveEncriptada,
     );
 
     if (!passwordValid) {
