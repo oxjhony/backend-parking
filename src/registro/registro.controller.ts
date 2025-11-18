@@ -86,8 +86,12 @@ export class RegistroController {
 
   @Get()
   @ApiOperation({ summary: 'Listar todos los registros' })
+  @ApiQuery({ name: 'estado', enum: EstadoRegistro, required: false })
   @ApiResponse({ status: 200, description: 'Listado de registros.' })
-  findAll() {
+  findAll(@Query('estado') estado?: EstadoRegistro) {
+    if (estado) {
+      return this.registroService.findByEstado(estado);
+    }
     return this.registroService.findAll();
   }
 

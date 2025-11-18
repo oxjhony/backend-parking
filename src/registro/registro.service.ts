@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -12,15 +13,19 @@ import { EstadoRegistro } from './enums/estado-registro.enum';
 import { VehiculoService } from '../vehiculo/vehiculo.service';
 import { UsuarioService } from '../usuario/usuario.service';
 import { ParqueaderoService } from '../parqueadero/parqueadero.service';
+import { PicoPlacaService } from '../pico-placa/pico-placa.service';
 
 @Injectable()
 export class RegistroService {
+  private readonly logger = new Logger(RegistroService.name);
+
   constructor(
     @InjectRepository(Registro)
     private readonly registroRepository: Repository<Registro>,
     private readonly vehiculoService: VehiculoService,
     private readonly usuarioService: UsuarioService,
     private readonly parqueaderoService: ParqueaderoService,
+    private readonly picoPlacaService: PicoPlacaService,
   ) {}
 
   async create(createRegistroDto: CreateRegistroDto): Promise<Registro> {
@@ -79,6 +84,26 @@ export class RegistroService {
           'Ya existe un registro activo en este parqueadero para el conductor del vehículo',
         );
       }
+    }
+
+    // ⚠️ VALIDAR PICO Y PLACA
+    const validacionPicoPlaca = this.picoPlacaService.validarPicoPlaca({
+      placa: createRegistroDto.vehiculoPlaca,
+    });
+
+    if (validacionPicoPlaca.tieneRestriccion) {
+      this.logger.warn(
+        `⚠️ Intento de ingreso con restricción de pico y placa: ${validacionPicoPlaca.mensaje}`,
+      );
+      throw new BadRequestException({
+        message: 'No se puede registrar el ingreso del vehículo',
+        restriccion: validacionPicoPlaca.mensaje,
+        detalles: {
+          placa: validacionPicoPlaca.placa,
+          diaSemana: validacionPicoPlaca.diaSemana,
+          digitosRestringidos: validacionPicoPlaca.digitosRestringidos,
+        },
+      });
     }
 
     // Crear el registro
@@ -143,6 +168,7 @@ export class RegistroService {
   async findOne(id: number): Promise<Registro> {
     const registro = await this.registroRepository.findOne({
       where: { id },
+      relations: ['vehiculo', 'usuario', 'parqueadero'],
     });
 
     if (!registro) {
