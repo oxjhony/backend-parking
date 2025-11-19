@@ -183,9 +183,7 @@ export class RegistroService {
   async remove(id: number): Promise<void> {
     const registro = await this.findOne(id);
 
-    // Si el registro está activo, liberar el cupo antes de eliminar
     if (registro.estado === EstadoRegistro.ACTIVO) {
-      // Obtener el vehículo para conocer su tipo
       const vehiculo = await this.vehiculoService.findOne(registro.vehiculoPlaca);
 
       await this.parqueaderoService.actualizarCuposDisponibles(
@@ -196,5 +194,26 @@ export class RegistroService {
     }
 
     await this.registroRepository.remove(registro);
+  }
+
+  async obtenerReporteCarrosPorFecha(fecha: string): Promise<{ entradas: Registro[]; salidas: Registro[] }> {
+    const entradas = await this.registroRepository
+      .createQueryBuilder('r')
+      .innerJoin('r.vehiculo', 'v')
+      .where('v.tipo = :tipo', { tipo: 'CARRO' })
+      .andWhere('DATE("r"."horaEntrada") = :fecha', { fecha })
+      .orderBy('"r"."horaEntrada"', 'ASC')
+      .getMany();
+
+    const salidas = await this.registroRepository
+      .createQueryBuilder('r')
+      .innerJoin('r.vehiculo', 'v')
+      .where('v.tipo = :tipo', { tipo: 'CARRO' })
+      .andWhere('"r"."horaSalida" IS NOT NULL')
+      .andWhere('DATE("r"."horaSalida") = :fecha', { fecha })
+      .orderBy('"r"."horaSalida"', 'ASC')
+      .getMany();
+
+    return { entradas, salidas };
   }
 }
