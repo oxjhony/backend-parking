@@ -30,6 +30,9 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolUsuario } from '../usuario/enums/rol-usuario.enum';
 import { EstadoRegistro } from './enums/estado-registro.enum';
+import { TipoVehiculo } from '../vehiculo/enums/tipo-vehiculo.enum';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @ApiTags('registro')
 @Controller('registro')
@@ -182,8 +185,17 @@ export class ReporteController {
     return body + xref;
   }
 
+  private static writeAndDownload(res: Response, title: string, lines: string[], filename: string) {
+    const pdf = ReporteController.generateSimplePdf(title, lines);
+    const dir = path.join(process.cwd(), 'reports');
+    fs.mkdirSync(dir, { recursive: true });
+    const filePath = path.join(dir, filename);
+    fs.writeFileSync(filePath, pdf, 'binary');
+    return res.download(filePath);
+  }
+
   @Get()
-  @Roles(RolUsuario.ADMINISTRADOR, RolUsuario.SUPERUSUARIO)
+  @Roles(RolUsuario.ADMINISTRADOR, RolUsuario.SUPERUSUARIO, RolUsuario.SUPERVISOR)
   @ApiOperation({ summary: 'Reporte PDF de carros por fecha' })
   @ApiQuery({ name: 'fecha', required: true, example: '2025-01-01' })
   @ApiProduces('application/pdf')
@@ -193,19 +205,57 @@ export class ReporteController {
     const title = `Reporte de carros ${fecha}`;
     const lines: string[] = [];
     lines.push(`Entradas: ${entradas.length}`);
-    for (const e of entradas) {
-      const h = e.horaEntrada ? new Date(e.horaEntrada).toISOString().slice(11, 16) : '';
-      lines.push(`${h} - ${e.vehiculoPlaca} - Parqueadero ${e.parqueaderoId}`);
-    }
-    lines.push('');
     lines.push(`Salidas: ${salidas.length}`);
-    for (const s of salidas) {
-      const h = s.horaSalida ? new Date(s.horaSalida).toISOString().slice(11, 16) : '';
-      lines.push(`${h} - ${s.vehiculoPlaca} - Parqueadero ${s.parqueaderoId}`);
-    }
-    const pdf = ReporteController.generateSimplePdf(title, lines);
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="reporte-${fecha}.pdf"`);
-    return res.send(Buffer.from(pdf, 'binary'));
+    return ReporteController.writeAndDownload(res, title, lines, `reporte-${fecha}.pdf`);
+  }
+
+  @Get('parqueadero/semana')
+  @Roles(RolUsuario.ADMINISTRADOR, RolUsuario.SUPERUSUARIO, RolUsuario.SUPERVISOR)
+  @ApiOperation({ summary: 'Reporte del parqueadero por semana' })
+  @ApiQuery({ name: 'inicio', required: true, example: '2025-11-10' })
+  @ApiQuery({ name: 'fin', required: true, example: '2025-11-16' })
+  @ApiProduces('application/pdf')
+  async parqueaderoSemana(@Query('inicio') inicio: string, @Query('fin') fin: string, @Res() res: Response) {
+    const r = await this.registroService.obtenerReporteParqueaderoPorSemana(inicio, fin);
+    const title = `Parqueadero semana ${inicio} a ${fin}`;
+    return ReporteController.writeAndDownload(res, title, [`Entradas: ${r.entradas}`, `Salidas: ${r.salidas}`], `reporte-parqueadero-semana-${inicio}-${fin}.pdf`);
+  }
+
+  @Get('parqueadero/mes')
+  @Roles(RolUsuario.ADMINISTRADOR, RolUsuario.SUPERUSUARIO, RolUsuario.SUPERVISOR)
+  @ApiOperation({ summary: 'Reporte del parqueadero por mes' })
+  @ApiQuery({ name: 'anio', required: true, example: 2025 })
+  @ApiQuery({ name: 'mes', required: true, example: 11 })
+  @ApiProduces('application/pdf')
+  async parqueaderoMes(@Query('anio') anio: string, @Query('mes') mes: string, @Res() res: Response) {
+    const r = await this.registroService.obtenerReporteParqueaderoPorMes(+anio, +mes);
+    const title = `Parqueadero mes ${anio}-${mes.padStart(2, '0')}`;
+    return ReporteController.writeAndDownload(res, title, [`Entradas: ${r.entradas}`, `Salidas: ${r.salidas}`], `reporte-parqueadero-mes-${anio}-${mes.padStart(2, '0')}.pdf`);
+  }
+
+  @Get('vehiculo/semana')
+  @Roles(RolUsuario.ADMINISTRADOR, RolUsuario.SUPERUSUARIO, RolUsuario.SUPERVISOR)
+  @ApiOperation({ summary: 'Reporte por tipo de vehículo por semana' })
+  @ApiQuery({ name: 'tipo', required: true, enum: TipoVehiculo, example: TipoVehiculo.CARRO })
+  @ApiQuery({ name: 'inicio', required: true, example: '2025-11-10' })
+  @ApiQuery({ name: 'fin', required: true, example: '2025-11-16' })
+  @ApiProduces('application/pdf')
+  async vehiculoSemana(@Query('tipo') tipo: TipoVehiculo, @Query('inicio') inicio: string, @Query('fin') fin: string, @Res() res: Response) {
+    const r = await this.registroService.obtenerReportePorTipoVehiculoSemana(tipo, inicio, fin);
+    const title = `Vehículo ${tipo} semana ${inicio} a ${fin}`;
+    return ReporteController.writeAndDownload(res, title, [`Entradas: ${r.entradas}`, `Salidas: ${r.salidas}`], `reporte-vehiculo-${tipo}-semana-${inicio}-${fin}.pdf`);
+  }
+
+  @Get('vehiculo/mes')
+  @Roles(RolUsuario.ADMINISTRADOR, RolUsuario.SUPERUSUARIO, RolUsuario.SUPERVISOR)
+  @ApiOperation({ summary: 'Reporte por tipo de vehículo por mes' })
+  @ApiQuery({ name: 'tipo', required: true, enum: TipoVehiculo, example: TipoVehiculo.MOTO })
+  @ApiQuery({ name: 'anio', required: true, example: 2025 })
+  @ApiQuery({ name: 'mes', required: true, example: 11 })
+  @ApiProduces('application/pdf')
+  async vehiculoMes(@Query('tipo') tipo: TipoVehiculo, @Query('anio') anio: string, @Query('mes') mes: string, @Res() res: Response) {
+    const r = await this.registroService.obtenerReportePorTipoVehiculoMes(tipo, +anio, +mes);
+    const title = `Vehículo ${tipo} mes ${anio}-${mes.padStart(2, '0')}`;
+    return ReporteController.writeAndDownload(res, title, [`Entradas: ${r.entradas}`, `Salidas: ${r.salidas}`], `reporte-vehiculo-${tipo}-mes-${anio}-${mes.padStart(2, '0')}.pdf`);
   }
 }

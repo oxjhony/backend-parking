@@ -12,6 +12,7 @@ import { EstadoRegistro } from './enums/estado-registro.enum';
 import { VehiculoService } from '../vehiculo/vehiculo.service';
 import { UsuarioService } from '../usuario/usuario.service';
 import { ParqueaderoService } from '../parqueadero/parqueadero.service';
+import { TipoVehiculo } from '../vehiculo/enums/tipo-vehiculo.enum';
 
 @Injectable()
 export class RegistroService {
@@ -214,6 +215,76 @@ export class RegistroService {
       .orderBy('"r"."horaSalida"', 'ASC')
       .getMany();
 
+    return { entradas, salidas };
+  }
+
+  async obtenerReporteParqueaderoPorSemana(inicio: string, fin: string): Promise<{ entradas: number; salidas: number }> {
+    const entradas = await this.registroRepository
+      .createQueryBuilder('r')
+      .where('DATE("r"."horaEntrada") BETWEEN :inicio AND :fin', { inicio, fin })
+      .getCount();
+    const salidas = await this.registroRepository
+      .createQueryBuilder('r')
+      .where('"r"."horaSalida" IS NOT NULL')
+      .andWhere('DATE("r"."horaSalida") BETWEEN :inicio AND :fin', { inicio, fin })
+      .getCount();
+    return { entradas, salidas };
+  }
+
+  async obtenerReporteParqueaderoPorMes(anio: number, mes: number): Promise<{ entradas: number; salidas: number }> {
+    const m = mes.toString().padStart(2, '0');
+    const inicio = `${anio}-${m}-01`;
+    const nextMonth = mes === 12 ? 1 : mes + 1;
+    const nextYear = mes === 12 ? anio + 1 : anio;
+    const fin = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`;
+    const entradas = await this.registroRepository
+      .createQueryBuilder('r')
+      .where('"r"."horaEntrada" >= :inicio AND "r"."horaEntrada" < :fin', { inicio, fin })
+      .getCount();
+    const salidas = await this.registroRepository
+      .createQueryBuilder('r')
+      .where('"r"."horaSalida" IS NOT NULL')
+      .andWhere('"r"."horaSalida" >= :inicio AND "r"."horaSalida" < :fin', { inicio, fin })
+      .getCount();
+    return { entradas, salidas };
+  }
+
+  async obtenerReportePorTipoVehiculoSemana(tipo: TipoVehiculo, inicio: string, fin: string): Promise<{ entradas: number; salidas: number }> {
+    const entradas = await this.registroRepository
+      .createQueryBuilder('r')
+      .innerJoin('r.vehiculo', 'v')
+      .where('v.tipo = :tipo', { tipo })
+      .andWhere('DATE("r"."horaEntrada") BETWEEN :inicio AND :fin', { inicio, fin })
+      .getCount();
+    const salidas = await this.registroRepository
+      .createQueryBuilder('r')
+      .innerJoin('r.vehiculo', 'v')
+      .where('v.tipo = :tipo', { tipo })
+      .andWhere('"r"."horaSalida" IS NOT NULL')
+      .andWhere('DATE("r"."horaSalida") BETWEEN :inicio AND :fin', { inicio, fin })
+      .getCount();
+    return { entradas, salidas };
+  }
+
+  async obtenerReportePorTipoVehiculoMes(tipo: TipoVehiculo, anio: number, mes: number): Promise<{ entradas: number; salidas: number }> {
+    const m = mes.toString().padStart(2, '0');
+    const inicio = `${anio}-${m}-01`;
+    const nextMonth = mes === 12 ? 1 : mes + 1;
+    const nextYear = mes === 12 ? anio + 1 : anio;
+    const fin = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`;
+    const entradas = await this.registroRepository
+      .createQueryBuilder('r')
+      .innerJoin('r.vehiculo', 'v')
+      .where('v.tipo = :tipo', { tipo })
+      .andWhere('"r"."horaEntrada" >= :inicio AND "r"."horaEntrada" < :fin', { inicio, fin })
+      .getCount();
+    const salidas = await this.registroRepository
+      .createQueryBuilder('r')
+      .innerJoin('r.vehiculo', 'v')
+      .where('v.tipo = :tipo', { tipo })
+      .andWhere('"r"."horaSalida" IS NOT NULL')
+      .andWhere('"r"."horaSalida" >= :inicio AND "r"."horaSalida" < :fin', { inicio, fin })
+      .getCount();
     return { entradas, salidas };
   }
 }
