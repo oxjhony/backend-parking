@@ -216,6 +216,8 @@ export class ReporteController {
   @ApiQuery({ name: 'fin', required: true, example: '2025-11-16' })
   @ApiProduces('application/pdf')
   async parqueaderoSemana(@Query('inicio') inicio: string, @Query('fin') fin: string, @Res() res: Response) {
+    console.log(inicio);
+    
     const r = await this.registroService.obtenerReporteParqueaderoPorSemana(inicio, fin);
     const title = `Parqueadero semana ${inicio} a ${fin}`;
     return ReporteController.writeAndDownload(res, title, [`Entradas: ${r.entradas}`, `Salidas: ${r.salidas}`], `reporte-parqueadero-semana-${inicio}-${fin}.pdf`);
