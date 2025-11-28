@@ -206,6 +206,38 @@ export class RegistroService {
     });
   }
 
+  /**
+   * Obtener registros activos discriminados por tipo de conductor
+   * @returns Objeto con registros institucionales y visitantes
+   */
+  async findActivosDiscriminados(): Promise<{
+    institucionales: Registro[];
+    visitantes: Registro[];
+    total: number;
+  }> {
+    // Obtener todos los registros activos con relaciones
+    const registrosActivos = await this.registroRepository.find({
+      where: { estado: EstadoRegistro.ACTIVO },
+      relations: ['vehiculo', 'usuario', 'parqueadero'],
+      order: { horaEntrada: 'DESC' },
+    });
+
+    // Discriminar por tipo de propietario del vehículo
+    const institucionales = registrosActivos.filter(
+      (registro) => registro.vehiculo.tipoPropietario === 'INSTITUCIONAL',
+    );
+
+    const visitantes = registrosActivos.filter(
+      (registro) => registro.vehiculo.tipoPropietario === 'VISITANTE',
+    );
+
+    return {
+      institucionales,
+      visitantes,
+      total: registrosActivos.length,
+    };
+  }
+
   async remove(id: number): Promise<void> {
     const registro = await this.findOne(id);
 
