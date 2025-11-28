@@ -105,7 +105,6 @@ describe('VisitanteService', () => {
         nombre: 'Juan',
         apellido: 'Pérez',
         telefono: '3001234567',
-        motivoVisita: 'Reunión académica',
       },
       placa: 'ABC123',
       tipoVehiculo: TipoVehiculo.CARRO,
@@ -113,6 +112,7 @@ describe('VisitanteService', () => {
       modelo: 'Corolla',
       color: 'Rojo',
       fechaCaducidad: '2025-12-31T23:59:59.000Z',
+      motivoVisita: 'Reunión académica',
       parqueaderoId: 1,
     };
 
@@ -197,7 +197,7 @@ describe('VisitanteService', () => {
         vehiculoPlaca: dto.placa,
         usuarioId: usuarioId,
         parqueaderoId: dto.parqueaderoId,
-        motivoVisita: dto.conductor.motivoVisita,
+        motivoVisita: dto.motivoVisita,
         estado: EstadoRegistro.ACTIVO,
       };
 
@@ -235,7 +235,7 @@ describe('VisitanteService', () => {
       expect(mockRegistroRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           vehiculoPlaca: dto.placa,
-          motivoVisita: dto.conductor.motivoVisita,
+          motivoVisita: dto.motivoVisita,
         }),
       );
     });
@@ -246,7 +246,6 @@ describe('VisitanteService', () => {
         nombre: 'Nombre Antiguo',
         apellido: 'Apellido Antiguo',
         telefono: '3009999999',
-        motivoVisita: 'Motivo antiguo',
       };
 
       mockPicoPlacaService.validarPicoPlaca.mockResolvedValue({
@@ -382,7 +381,6 @@ describe('VisitanteService', () => {
       nombre: 'Juan',
       apellido: 'Pérez',
       telefono: '3001234567',
-      motivoVisita: 'Reunión',
     };
 
     it('debe crear nuevo visitante si no existe', async () => {

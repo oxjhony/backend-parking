@@ -75,7 +75,6 @@ describe('Visitante Module (e2e)', () => {
         nombre: 'Pedro',
         apellido: 'González',
         telefono: '3201112222',
-        motivoVisita: 'Prueba E2E',
       },
       placa: 'TEST01',
       tipoVehiculo: 'CARRO',
@@ -83,6 +82,7 @@ describe('Visitante Module (e2e)', () => {
       modelo: 'Fiesta',
       color: 'Azul',
       fechaCaducidad: '2025-12-31T23:59:59.000Z',
+      motivoVisita: 'Prueba E2E',
       parqueaderoId: 1,
     };
 
@@ -165,10 +165,11 @@ describe('Visitante Module (e2e)', () => {
         conductor: {
           cedula: '9999999995',
           nombre: 'Test',
-          // Falta apellido, telefono, motivoVisita
+          // Falta apellido, telefono
         },
         placa: 'TEST04',
         tipoVehiculo: 'CARRO',
+        // Falta motivoVisita
       };
 
       return request(app.getHttpServer())
@@ -390,7 +391,6 @@ describe('Visitante Module (e2e)', () => {
             nombre: 'Test',
             apellido: 'Pico Placa',
             telefono: '3001111111',
-            motivoVisita: 'Test pico y placa',
           },
           placa: placaRestringida,
           tipoVehiculo: 'CARRO',
@@ -398,6 +398,7 @@ describe('Visitante Module (e2e)', () => {
           modelo: 'Test',
           color: 'Test',
           fechaCaducidad: '2025-12-31T23:59:59.000Z',
+          motivoVisita: 'Test pico y placa',
           parqueaderoId: 1,
         };
 
@@ -432,7 +433,6 @@ describe('Visitante Module (e2e)', () => {
             nombre: 'Flujo',
             apellido: 'Completo',
             telefono: '3001234567',
-            motivoVisita: 'Test integración',
           },
           placa: placa,
           tipoVehiculo: 'CARRO',
@@ -440,6 +440,7 @@ describe('Visitante Module (e2e)', () => {
           modelo: 'Corolla',
           color: 'Rojo',
           fechaCaducidad: '2025-12-31T23:59:59.000Z',
+          motivoVisita: 'Test integración',
           parqueaderoId: 1,
         });
 
@@ -486,11 +487,11 @@ describe('Visitante Module (e2e)', () => {
             nombre: 'Flujo',
             apellido: 'Completo',
             telefono: '3001234567',
-            motivoVisita: 'Segunda visita',
           },
           placa: placa,
           tipoVehiculo: 'CARRO',
           fechaCaducidad: '2025-12-31T23:59:59.000Z',
+          motivoVisita: 'Segunda visita',
           parqueaderoId: 1,
         });
 
