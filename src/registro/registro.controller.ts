@@ -86,9 +86,42 @@ export class RegistroController {
 
   @Get()
   @ApiOperation({ summary: 'Listar todos los registros' })
+  @ApiQuery({ name: 'estado', enum: EstadoRegistro, required: false })
   @ApiResponse({ status: 200, description: 'Listado de registros.' })
-  findAll() {
+  findAll(@Query('estado') estado?: EstadoRegistro) {
+    if (estado) {
+      return this.registroService.findByEstado(estado);
+    }
     return this.registroService.findAll();
+  }
+
+  @Get('activos/discriminados')
+  @ApiOperation({ 
+    summary: 'Listar registros activos discriminados por tipo de conductor',
+    description: 'Devuelve los registros activos separados en institucionales y visitantes'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Registros activos discriminados por tipo de conductor.',
+    schema: {
+      properties: {
+        institucionales: {
+          type: 'array',
+          description: 'Registros de conductores institucionales'
+        },
+        visitantes: {
+          type: 'array',
+          description: 'Registros de visitantes'
+        },
+        total: {
+          type: 'number',
+          description: 'Total de registros activos'
+        }
+      }
+    }
+  })
+  findActivosDiscriminados() {
+    return this.registroService.findActivosDiscriminados();
   }
 
   @Get('estado/:estado')

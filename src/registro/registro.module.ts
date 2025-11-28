@@ -6,6 +6,7 @@ import { Registro } from './entities/registro.entity';
 import { VehiculoModule } from '../vehiculo/vehiculo.module';
 import { UsuarioModule } from '../usuario/usuario.module';
 import { ParqueaderoModule } from '../parqueadero/parqueadero.module';
+import { PicoPlacaModule } from '../pico-placa/pico-placa.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { ParqueaderoModule } from '../parqueadero/parqueadero.module';
     VehiculoModule,
     UsuarioModule,
     ParqueaderoModule,
+    PicoPlacaModule,
   ],
   controllers: [RegistroController],
   providers: [RegistroService],

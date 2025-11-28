@@ -16,7 +16,7 @@ export class Usuario {
   correo: string;
 
   @Column({ type: 'varchar', length: 255, select: false })
-  passwordHash: string;
+  claveEncriptada: string;
 
   @Column({ type: 'enum', enum: RolUsuario, default: RolUsuario.VIGILANTE })
   rol: RolUsuario;

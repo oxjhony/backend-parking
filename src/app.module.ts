@@ -10,6 +10,8 @@ import { ConductorModule } from './conductor/conductor.module';
 import { UsuarioModule } from './usuario/usuario.module';
 import { AuthModule } from './auth/auth.module';
 import { RegistroModule } from './registro/registro.module';
+import { PicoPlacaModule } from './pico-placa/pico-placa.module';
+import { VisitanteModule } from './visitante/visitante.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
@@ -25,6 +27,8 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     ParqueaderoModule,
     ConductorModule,
     RegistroModule,
+    PicoPlacaModule,
+    VisitanteModule,
   ],
   controllers: [AppController],
   providers: [

@@ -28,12 +28,12 @@ export class UsuarioService {
       throw new BadRequestException('Correo o cédula ya registrados');
     }
 
-    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const claveEncriptada = await bcrypt.hash(dto.contraseña, 10);
     const usuario = this.usuarioRepository.create({
       nombre: dto.nombre,
       cedula: dto.cedula,
       correo: dto.correo,
-      passwordHash,
+      claveEncriptada,
       rol: dto.rol ?? undefined,
     });
 
@@ -95,10 +95,10 @@ export class UsuarioService {
       }
     }
 
-    if (updateUsuarioDto.password) {
-      const passwordHash = await bcrypt.hash(updateUsuarioDto.password, 10);
-      Object.assign(usuario, { ...updateUsuarioDto, passwordHash });
-      delete updateUsuarioDto.password;
+    if (updateUsuarioDto.contraseña) {
+      const claveEncriptada = await bcrypt.hash(updateUsuarioDto.contraseña, 10);
+      Object.assign(usuario, { ...updateUsuarioDto, claveEncriptada });
+      delete updateUsuarioDto.contraseña;
     } else {
       Object.assign(usuario, updateUsuarioDto);
     }

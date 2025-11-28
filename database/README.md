@@ -1,232 +1,247 @@
-# 📂 Carpeta Database - Guía de Configuración
+# 📂 Base de Datos - CampusParking
 
-Esta carpeta contiene todos los scripts SQL necesarios para configurar la base de datos del proyecto CampusParking.
+Base de datos PostgreSQL en AWS RDS con triggers para integridad referencial.
 
-## 📄 Archivos Disponibles
+---
 
-### 1. `setup.sql` ⭐ (COMENZAR AQUÍ)
-Script principal para crear la base de datos desde cero.
+## 🌐 Configuración en Producción (AWS RDS)
 
-**Uso:**
+**Actual**: Base de datos en la nube
+- Host: `database-1.cx2y06gkeke5.us-east-2.rds.amazonaws.com`
+- Puerto: `5432`
+- Base de datos: `campus_parking`
+- SSL: ✅ Habilitado automáticamente
+
+**Credenciales**: Ver archivo `.env` en la raíz del proyecto
+
+---
+
+## 📄 Archivos Esenciales
+
+### 1. `reset-and-create-with-integrity.sql` ⭐
+Script completo para crear la base de datos desde cero con **triggers de integridad referencial**.
+
+**Incluye:**
+- ✅ 4 ENUMs (tipo_vehiculo, tipo_propietario, estado_registro, rol_usuario)
+- ✅ 6 tablas con constraints
+- ✅ 6 triggers (validación automática de propietarios, prevención de eliminación)
+- ✅ 13 índices para performance
+- ✅ 3 vistas útiles (v_vehiculos_completos, v_registros_activos, v_estadisticas_parqueaderos)
+
+**Uso (AWS RDS):**
 ```bash
-psql -U postgres -h localhost -p 5433 -f database/setup.sql
+export PGPASSWORD=tu_password
+psql -h database-1.cx2y06gkeke5.us-east-2.rds.amazonaws.com \
+     -p 5432 \
+     -U postgres \
+     -d postgres \
+     -f reset-and-create-with-integrity.sql
 ```
-
-**O en pgAdmin:**
-- Query Tool → Abrir archivo → Ejecutar (F5)
 
 ---
 
 ### 2. `datos-prueba.sql`
 Inserta datos de ejemplo para probar la aplicación.
 
+**Datos incluidos:**
+- 3 usuarios (admin, superusuario, vigilante)
+- 6 conductores institucionales
+- 4 visitantes
+- 11 vehículos (7 institucionales, 4 visitantes)
+- 5 parqueaderos
+- 10 registros de entrada/salida
+
+**Uso (AWS RDS):**
+```bash
+export PGPASSWORD=tu_password
+psql -h database-1.cx2y06gkeke5.us-east-2.rds.amazonaws.com \
+     -p 5432 \
+     -U postgres \
+     -d campus_parking \
+     -f datos-prueba.sql
+```
+
+---
+
+### 3. Scripts de Migración
+
+#### `migrate-to-aws.bat` (Windows)
+Migra toda la estructura y datos a AWS RDS en un solo paso.
+
+**Uso:**
+```cmd
+cd database
+migrate-to-aws.bat
+```
+
+#### `migrate-to-aws.sh` (Linux/macOS)
+Versión bash del script de migración.
+
 **Uso:**
 ```bash
-# Primero asegúrate de que la aplicación haya creado las tablas (npm run start:dev)
-psql -U postgres -h localhost -p 5433 -d campus_parking -f database/datos-prueba.sql
-```
-
-**Datos incluidos:**
-- 6 conductores de ejemplo
-- 7 vehículos asociados
-- 5 parqueaderos con cupos
-
----
-
-### 3. Scripts de Utilidad
-
-#### `add-postgres-to-path.bat` (Windows)
-Añade PostgreSQL al PATH del sistema.
-
-#### `recreate-db.bat` (Windows)
-Ejecuta la recreación de la BD con un solo click.
-
-#### `insertar-datos.bat` (Windows)
-Inserta los datos de prueba con un solo click.
-
-#### `verificar-estructura.sh` (Bash/Linux)
-Verifica la estructura de las tablas.
-
----
-
-## 🚀 Guía Rápida 
-
-### Opción 1: Configuración Rápida (Recomendada)
-
-```bash
-# 1. Clonar el repositorio
-git clone <url-del-repo>
-cd backend-parking
-
-# 2. Instalar dependencias
-npm install
-
-# 3. Copiar archivo de configuración
-cp .env.example .env
-# Edita .env con tus credenciales de PostgreSQL
-
-# 4. Crear la base de datos (verifica que puerto configuraste)
-psql -U postgres -h localhost -p 5433 -f database/setup.sql
-
-# 5. Iniciar la aplicación (crea las tablas automáticamente)
-npm run start:dev
-
-# 6. (Opcional) Insertar datos de prueba
-psql -U postgres -h localhost -p 5433 -d campus_parking -f database/datos-prueba.sql
+cd database
+chmod +x migrate-to-aws.sh
+./migrate-to-aws.sh
 ```
 
 ---
 
-### Opción 2: Usando pgAdmin (Visual)
+## 🚀 Reconstruir Base de Datos (Completa)
 
-1. **Abrir pgAdmin 4**
+### Opción 1: Script Automatizado (Recomendado)
 
-2. **Crear la base de datos:**
-   - Click derecho en Databases → Create → Database
-   - Name: `campus_parking`
-   - Owner: `postgres`
-   - Save
+**Windows:**
+```cmd
+cd database
+migrate-to-aws.bat
+```
 
-3. **Iniciar la aplicación:**
-   ```bash
-   npm run start:dev
-   ```
-   - TypeORM creará las tablas automáticamente
+**Linux/macOS:**
+```bash
+cd database
+chmod +x migrate-to-aws.sh
+./migrate-to-aws.sh
+```
 
-4. **Insertar datos de prueba:**
-   - Abrir Query Tool en la base de datos campus_parking
-   - Cargar `database/datos-prueba.sql`
-   - Ejecutar (F5)
+El script automáticamente:
+1. ✅ Verifica conexión a AWS RDS
+2. ✅ Elimina base de datos existente (si existe)
+3. ✅ Crea base de datos nueva
+4. ✅ Ejecuta `reset-and-create-with-integrity.sql`
+5. ✅ Pregunta si insertar datos de prueba
+6. ✅ Verifica la migración
 
 ---
 
-## 🔍 Verificar la Instalación
+### Opción 2: Manual (Paso a Paso)
 
-### 1. Verificar que la base de datos existe:
 ```bash
-psql -U postgres -h localhost -p 5433 -l | grep campus_parking
+# 1. Conectar a AWS RDS
+export PGPASSWORD=root1234
+export PGHOST=database-1.cx2y06gkeke5.us-east-2.rds.amazonaws.com
+export PGPORT=5432
+export PGUSER=postgres
+
+# 2. Eliminar BD existente (CUIDADO: borra todos los datos)
+psql -d postgres -c "DROP DATABASE IF EXISTS campus_parking;"
+
+# 3. Crear BD nueva
+psql -d postgres -c "CREATE DATABASE campus_parking WITH ENCODING='UTF8';"
+
+# 4. Ejecutar script de estructura
+psql -d campus_parking -f reset-and-create-with-integrity.sql
+
+# 5. (Opcional) Insertar datos de prueba
+psql -d campus_parking -f datos-prueba.sql
+
+# 6. Verificar
+psql -d campus_parking -c "\dt"
 ```
 
-### 2. Ver las tablas creadas:
+---
+
+## 🔍 Verificar Instalación
+
+### Ver tablas creadas:
 ```bash
-psql -U postgres -h localhost -p 5433 -d campus_parking -c "\dt"
+export PGPASSWORD=root1234
+psql -h database-1.cx2y06gkeke5.us-east-2.rds.amazonaws.com \
+     -p 5432 \
+     -U postgres \
+     -d campus_parking \
+     -c "\dt"
 ```
 
-Deberías ver:
-- `conductores`
-- `vehiculos`
-- `parqueaderos`
-
-### 3. Ver estructura de una tabla:
-```bash
-psql -U postgres -h localhost -p 5433 -d campus_parking -c "\d conductores"
+**Salida esperada:**
 ```
-
-### 4. Probar la API:
-```bash
-# Obtener todos los conductores
-curl http://localhost:3000/conductor
-
-# Obtener todos los vehículos
-curl http://localhost:3000/vehiculo
-
-# Obtener todos los parqueaderos
-curl http://localhost:3000/parqueadero
+ Schema |         Name           | Type  |  Owner
+--------+------------------------+-------+----------
+ public | conductores            | table | postgres
+ public | parqueaderos           | table | postgres
+ public | registros              | table | postgres
+ public | usuarios               | table | postgres
+ public | vehiculos              | table | postgres
+ public | visitantes_conductores | table | postgres
 ```
 
 ---
 
 ## 📋 Estructura de la Base de Datos
 
-### Tabla: `conductores`
-```sql
-codigo (VARCHAR 50) PRIMARY KEY
-nombre (VARCHAR 100)
-correo (VARCHAR 100) UNIQUE
-```
-**Ejemplo de datos:**
-- Código: `0000028932` (10 dígitos con ceros a la izquierda)
-- Correo: `usuario@ucaldas.edu.co`
+### Tablas Principales
+
+#### `usuarios`
+- `id` (SERIAL) PRIMARY KEY
+- `nombre`, `cedula` UNIQUE, `correo` UNIQUE
+- `rol` (ENUM: 'ADMINISTRADOR', 'SUPERUSUARIO', 'VIGILANTE')
+
+#### `conductores` (institucionales)
+- `codigo` (VARCHAR 50) PRIMARY KEY
+- `nombre`, `apellido`, `correo` UNIQUE, `telefono`
+
+#### `visitantes_conductores`
+- `cedula` (VARCHAR 20) PRIMARY KEY
+- `nombre`, `apellido`, `telefono`, `correo`, `motivoVisita`
+
+#### `vehiculos` (polimórfica)
+- `placa` PRIMARY KEY
+- `tipo_propietario` (ENUM: 'INSTITUCIONAL', 'VISITANTE')
+- `propietario_id` - Validado por triggers
+- `fecha_caducidad` - Obligatorio para visitantes
 
 ---
 
-### Tabla: `vehiculos`
-```sql
-placa (VARCHAR 20) PRIMARY KEY
-tipo (ENUM: 'CARRO' | 'MOTO')
-marca (VARCHAR 50)
-modelo (VARCHAR 50)
-color (VARCHAR 30)
-fechaCaducidad (TIMESTAMP)
-conductorCodigo (VARCHAR 50) FOREIGN KEY
-```
+## 🔒 Integridad Referencial (Triggers)
+
+### Triggers Implementados:
+
+1. **`trigger_validar_propietario_vehiculo`**
+   - Valida que el propietario exista antes de INSERT/UPDATE
+   - Garantiza: No hay vehículos huérfanos
+
+2. **`trigger_proteger_conductor/visitante`**
+   - Previene eliminación de propietarios con vehículos
+   - Garantiza: Integridad de datos
+
+**Ver documentación completa**: `INTEGRIDAD-REFERENCIAL.md`
 
 ---
 
-### Tabla: `parqueaderos`
-```sql
-id (SERIAL) PRIMARY KEY
-nombre (VARCHAR 100)
-direccion (VARCHAR 200)
-capacidad (INTEGER)
-cuposDisponibles (INTEGER)
-```
+## ⚠️ Problemas Comunes
 
----
-
-## ⚠️ Problemas Comunes y Soluciones
-
-
-### Error: "database already exists"
-**Solución:**
-```bash
-# Eliminar la BD existente
-psql -U postgres -h localhost -p 5433 -c "DROP DATABASE campus_parking;"
-
-# Volver a ejecutar setup.sql
-psql -U postgres -h localhost -p 5433 -f database/setup.sql
-```
+### Error: "Connection timed out"
+**Solución**: Configurar Security Group en AWS Console  
+**Ver**: `AWS-SETUP-SECURITY.md`
 
 ### Error: "password authentication failed"
-**Solución:**
-- Verifica que la contraseña en `.env` coincida con tu PostgreSQL
-- Contraseña por defecto: `admin1234`
-
-### Error: "connection refused"
-**Solución:**
-- Verifica que PostgreSQL esté corriendo
-- Verifica el puerto en `.env` (5433 o 5432)
-- Inicia PostgreSQL: `net start postgresql-x64-17` (Windows)
-
-### Las tablas no se crean
-**Solución:**
-1. Verifica que `synchronize: true` esté en `database.module.ts`
-2. Verifica los logs al iniciar `npm run start:dev`
-3. Revisa que las entidades tengan decoradores de TypeORM
+**Solución**: Verificar `.env` tiene `DATABASE_PASSWORD=root1234`
 
 ---
 
-## 🔒 Seguridad
+## 🔐 Seguridad
 
-- **NO subir el archivo `.env` al repositorio** (ya está en `.gitignore`)
-- La contraseña por defecto `admin1234` es solo para desarrollo
-- En producción usar variables de entorno seguras
-- Desactivar `synchronize: true` en producción
+**Desarrollo**:
+- ✅ SSL habilitado
+- ⚠️ Security Group abierto (0.0.0.0/0)
 
----
+**Producción** (Recomendado):
+- Cambiar contraseña postgres
+- Restringir Security Group
+- Crear usuario específico para app
+- Habilitar backups
 
-## 📚 Recursos Adicionales
-
-- [Documentación TypeORM](https://typeorm.io/)
-- [Documentación NestJS + TypeORM](https://docs.nestjs.com/techniques/database)
-- [Documentación PostgreSQL](https://www.postgresql.org/docs/)
-
----
-
+**Ver guía**: `AWS-SETUP-SECURITY.md`
 
 ---
 
-**Última actualización:** Octubre 2025  
-**Versión PostgreSQL:** 17+  
-**Versión Node:** 18+  
-**Framework:** NestJS 10+
+## 📚 Documentación Adicional
+
+- `INTEGRIDAD-REFERENCIAL.md` - Triggers vs Foreign Keys
+- `AWS-SETUP-SECURITY.md` - Configuración de seguridad AWS
+
+---
+
+**Última actualización:** Noviembre 2025  
+**PostgreSQL:** 16+ (AWS RDS)  
+**Framework:** NestJS 10+  
+**Región AWS:** us-east-2
