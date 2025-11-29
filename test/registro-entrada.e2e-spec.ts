@@ -49,6 +49,21 @@ describe('Registro de Entrada Manual - E2E', () => {
     guardiaId = loginResponse.body.user.id;
   }, 30000); // Aumentar timeout a 30 segundos para inicialización
 
+  afterEach(async () => {
+    // Limpiar todos los registros activos después de cada test
+    // para evitar interferencias entre tests
+    const registrosActivos = await dataSource.query(
+      `SELECT id FROM registros WHERE estado = 'ACTIVO'`
+    );
+    
+    for (const registro of registrosActivos) {
+      await request(app.getHttpServer())
+        .patch(`/registro/${registro.id}/salida`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send();
+    }
+  });
+
   afterAll(async () => {
     await app.close();
   });

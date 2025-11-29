@@ -16,10 +16,10 @@ export class Registro {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @CreateDateColumn({ type: 'timestamp' })
+  @CreateDateColumn({ type: 'timestamp', name: 'horaEntrada' })
   horaEntrada: Date;
 
-  @Column({ type: 'timestamp', nullable: true, default: null })
+  @Column({ type: 'timestamp', nullable: true, default: null, name: 'horaSalida' })
   horaSalida: Date | null;
 
   @Column({
@@ -29,8 +29,15 @@ export class Registro {
   })
   estado: EstadoRegistro;
 
+  /**
+   * Motivo de visita (solo para visitantes)
+   * Este campo es opcional y se usa únicamente cuando el vehículo es de tipo VISITANTE
+   */
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'motivo_visita' })
+  motivoVisita: string | null;
+
   // Relación con Vehiculo (Many-to-One)
-  @Column({ type: 'varchar', length: 20 })
+  @Column({ type: 'varchar', length: 20, name: 'vehiculoPlaca' })
   vehiculoPlaca: string;
 
   @ManyToOne(() => Vehiculo)
@@ -38,7 +45,7 @@ export class Registro {
   vehiculo: Vehiculo;
 
   // Relación con Usuario (Many-to-One)
-  @Column({ type: 'int' })
+  @Column({ type: 'int', name: 'usuarioId' })
   usuarioId: number;
 
   @ManyToOne(() => Usuario)
@@ -46,7 +53,7 @@ export class Registro {
   usuario: Usuario;
 
   // Relación con Parqueadero (Many-to-One)
-  @Column({ type: 'int' })
+  @Column({ type: 'int', name: 'parqueaderoId' })
   parqueaderoId: number;
 
   @ManyToOne(() => Parqueadero)

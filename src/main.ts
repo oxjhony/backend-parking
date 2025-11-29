@@ -8,9 +8,22 @@ import { ParqueaderoService } from './parqueadero/parqueadero.service';
 import { VehiculoService } from './vehiculo/vehiculo.service';
 import { RegistroService } from './registro/registro.service';
 import { TipoVehiculo } from './vehiculo/enums/tipo-vehiculo.enum';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Configuración de validación global
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Elimina propiedades que no están en el DTO
+      forbidNonWhitelisted: true, // Lanza error si hay propiedades extras
+      transform: true, // Transforma los tipos automáticamente
+      transformOptions: {
+        enableImplicitConversion: true, // Convierte tipos implícitamente
+      },
+    }),
+  );
 
   // Configuración de CORS
   app.enableCors({

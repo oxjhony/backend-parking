@@ -1,5 +1,6 @@
-import { IsString, IsEnum, IsNotEmpty, IsDateString } from 'class-validator';
+import { IsString, IsEnum, IsNotEmpty, IsDateString, IsOptional } from 'class-validator';
 import { TipoVehiculo } from '../enums/tipo-vehiculo.enum';
+import { TipoPropietario } from '../enums/tipo-propietario.enum';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateVehiculoDto {
@@ -13,28 +14,40 @@ export class CreateVehiculoDto {
   @IsNotEmpty()
   tipo: TipoVehiculo;
 
-  @ApiProperty({ example: 'Toyota' })
-  @IsString()
+  @ApiProperty({ 
+    enum: TipoPropietario, 
+    example: TipoPropietario.INSTITUCIONAL,
+    description: 'Tipo de propietario del vehículo'
+  })
+  @IsEnum(TipoPropietario)
   @IsNotEmpty()
-  marca: string;
+  tipoPropietario: TipoPropietario;
 
-  @ApiProperty({ example: 'Corolla' })
+  @ApiProperty({ 
+    example: '0000028932',
+    description: 'Código del conductor institucional o cédula del visitante'
+  })
   @IsString()
   @IsNotEmpty()
-  modelo: string;
+  propietarioId: string;
 
-  @ApiProperty({ example: 'Rojo' })
+  @ApiProperty({ example: 'Toyota', required: false })
   @IsString()
-  @IsNotEmpty()
-  color: string;
+  @IsOptional()
+  marca?: string;
+
+  @ApiProperty({ example: 'Corolla', required: false })
+  @IsString()
+  @IsOptional()
+  modelo?: string;
+
+  @ApiProperty({ example: 'Rojo', required: false })
+  @IsString()
+  @IsOptional()
+  color?: string;
 
   @ApiProperty({ example: '2025-12-31T23:59:59Z' })
   @IsDateString()
   @IsNotEmpty()
   fechaCaducidad: string;
-
-  @ApiProperty({ example: '0000028932' })
-  @IsString()
-  @IsNotEmpty()
-  conductorCodigo: string;
 }
