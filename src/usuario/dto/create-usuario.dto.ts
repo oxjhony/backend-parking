@@ -25,7 +25,7 @@ export class CreateUsuarioDto {
   @ApiPropertyOptional({
     description: 'Rol del usuario',
     enum: RolUsuario,
-    examples: [RolUsuario.ADMINISTRADOR, RolUsuario.VIGILANTE, RolUsuario.SUPERUSUARIO],
+    examples: [RolUsuario.ADMINISTRADOR, RolUsuario.VIGILANTE, RolUsuario.SUPERVISOR, RolUsuario.SUPERUSUARIO],
     default: RolUsuario.VIGILANTE,
   })
   @IsOptional()

@@ -41,7 +41,7 @@ export class CreateVehiculoDto {
   @IsOptional()
   modelo?: string;
 
-  @ApiProperty({ example: 'Rojo', required: false })
+  @ApiProperty({ example: 'INT-0001', required: false })
   @IsString()
   @IsOptional()
   color?: string;

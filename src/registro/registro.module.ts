@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RegistroService } from './registro.service';
-import { RegistroController } from './registro.controller';
+import { RegistroController, ReporteController } from './registro.controller';
 import { Registro } from './entities/registro.entity';
 import { VehiculoModule } from '../vehiculo/vehiculo.module';
 import { UsuarioModule } from '../usuario/usuario.module';
@@ -16,7 +16,7 @@ import { PicoPlacaModule } from '../pico-placa/pico-placa.module';
     ParqueaderoModule,
     PicoPlacaModule,
   ],
-  controllers: [RegistroController],
+  controllers: [RegistroController, ReporteController],
   providers: [RegistroService],
   exports: [RegistroService],
 })
