@@ -8,6 +8,7 @@ import { ParqueaderoService } from './parqueadero/parqueadero.service';
 import { VehiculoService } from './vehiculo/vehiculo.service';
 import { RegistroService } from './registro/registro.service';
 import { TipoVehiculo } from './vehiculo/enums/tipo-vehiculo.enum';
+import { TipoPropietario } from './vehiculo/enums/tipo-propietario.enum';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
@@ -90,7 +91,20 @@ async function bootstrap() {
     const vehiculos = await vehiculoService.findAll();
     const ensureVehiculo = async (placa: string, tipo: TipoVehiculo, marca: string, modelo: string, color: string, conductorCodigo: string) => {
       if (!vehiculos.find(v => v.placa === placa)) {
-        await vehiculoService.create({ placa, tipo, marca, modelo, color, fechaCaducidad: todayIso, conductorCodigo });
+        const tipoPropietario = conductorCodigo && conductorCodigo.startsWith('INT-')
+          ? TipoPropietario.INSTITUCIONAL
+          : TipoPropietario.VISITANTE;
+
+        await vehiculoService.create({
+          placa,
+          tipo,
+          marca,
+          modelo,
+          color,
+          fechaCaducidad: todayIso,
+          tipoPropietario,
+          propietarioId: conductorCodigo,
+        });
       }
     };
     await ensureVehiculo('ADM-001', TipoVehiculo.CARRO, 'Toyota', 'Corolla', 'Rojo', 'INT-0001');
