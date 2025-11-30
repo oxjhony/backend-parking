@@ -238,7 +238,17 @@ export class ReporteController {
     const title = `Reporte de carros ${fecha}`;
     const lines: string[] = [];
     lines.push(`Entradas: ${entradas.length}`);
+    for (const e of entradas) {
+      const vh = e.vehiculo as any;
+      const he = new Date(e.horaEntrada).toISOString().substring(11, 19);
+      lines.push(`${he} ${e.vehiculoPlaca} (${vh?.tipo ?? ''} ${vh?.marca ?? ''} ${vh?.modelo ?? ''} ${vh?.color ?? ''})`);
+    }
     lines.push(`Salidas: ${salidas.length}`);
+    for (const s of salidas) {
+      const vh = s.vehiculo as any;
+      const hs = s.horaSalida ? new Date(s.horaSalida).toISOString().substring(11, 19) : '';
+      lines.push(`${hs} ${s.vehiculoPlaca} (${vh?.tipo ?? ''} ${vh?.marca ?? ''} ${vh?.modelo ?? ''} ${vh?.color ?? ''})`);
+    }
     return ReporteController.writeAndDownload(res, title, lines, `reporte-${fecha}.pdf`);
   }
 

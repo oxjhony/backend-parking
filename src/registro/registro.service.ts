@@ -258,7 +258,7 @@ export class RegistroService {
   async obtenerReporteCarrosPorFecha(fecha: string): Promise<{ entradas: Registro[]; salidas: Registro[] }> {
     const entradas = await this.registroRepository
       .createQueryBuilder('r')
-      .innerJoin('r.vehiculo', 'v')
+      .innerJoinAndSelect('r.vehiculo', 'v')
       .where('v.tipo = :tipo', { tipo: 'CARRO' })
       .andWhere('DATE("r"."horaEntrada") = :fecha', { fecha })
       .orderBy('"r"."horaEntrada"', 'ASC')
@@ -266,7 +266,7 @@ export class RegistroService {
 
     const salidas = await this.registroRepository
       .createQueryBuilder('r')
-      .innerJoin('r.vehiculo', 'v')
+      .innerJoinAndSelect('r.vehiculo', 'v')
       .where('v.tipo = :tipo', { tipo: 'CARRO' })
       .andWhere('"r"."horaSalida" IS NOT NULL')
       .andWhere('DATE("r"."horaSalida") = :fecha', { fecha })

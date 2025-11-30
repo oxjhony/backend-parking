@@ -16,7 +16,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         database: configService.get('DATABASE_NAME'),
         autoLoadEntities: true,
         entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-        synchronize: false, // Cambiar a false porque ya tenemos triggers en RDS
+        synchronize: true, // Cambiar a false porque ya tenemos triggers en RDS
         logging: true,
         // Configuración SSL para AWS RDS
         ssl: configService.get('DATABASE_HOST')?.includes('rds.amazonaws.com')
