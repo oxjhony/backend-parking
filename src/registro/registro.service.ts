@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -12,15 +13,20 @@ import { EstadoRegistro } from './enums/estado-registro.enum';
 import { VehiculoService } from '../vehiculo/vehiculo.service';
 import { UsuarioService } from '../usuario/usuario.service';
 import { ParqueaderoService } from '../parqueadero/parqueadero.service';
+import { TipoVehiculo } from '../vehiculo/enums/tipo-vehiculo.enum';
+import { PicoPlacaService } from '../pico-placa/pico-placa.service';
 
 @Injectable()
 export class RegistroService {
+  private readonly logger = new Logger(RegistroService.name);
+
   constructor(
     @InjectRepository(Registro)
     private readonly registroRepository: Repository<Registro>,
     private readonly vehiculoService: VehiculoService,
     private readonly usuarioService: UsuarioService,
     private readonly parqueaderoService: ParqueaderoService,
+    private readonly picoPlacaService: PicoPlacaService,
   ) {}
 
   async create(createRegistroDto: CreateRegistroDto): Promise<Registro> {
@@ -79,6 +85,26 @@ export class RegistroService {
           'Ya existe un registro activo en este parqueadero para el conductor del vehículo',
         );
       }
+    }
+
+    // ⚠️ VALIDAR PICO Y PLACA
+    const validacionPicoPlaca = this.picoPlacaService.validarPicoPlaca({
+      placa: createRegistroDto.vehiculoPlaca,
+    });
+
+    if (validacionPicoPlaca.tieneRestriccion) {
+      this.logger.warn(
+        `⚠️ Intento de ingreso con restricción de pico y placa: ${validacionPicoPlaca.mensaje}`,
+      );
+      throw new BadRequestException({
+        message: 'No se puede registrar el ingreso del vehículo',
+        restriccion: validacionPicoPlaca.mensaje,
+        detalles: {
+          placa: validacionPicoPlaca.placa,
+          diaSemana: validacionPicoPlaca.diaSemana,
+          digitosRestringidos: validacionPicoPlaca.digitosRestringidos,
+        },
+      });
     }
 
     // Crear el registro
@@ -143,6 +169,7 @@ export class RegistroService {
   async findOne(id: number): Promise<Registro> {
     const registro = await this.registroRepository.findOne({
       where: { id },
+      relations: ['vehiculo', 'usuario', 'parqueadero'],
     });
 
     if (!registro) {
@@ -180,12 +207,42 @@ export class RegistroService {
     });
   }
 
+  /**
+   * Obtener registros activos discriminados por tipo de conductor
+   * @returns Objeto con registros institucionales y visitantes
+   */
+  async findActivosDiscriminados(): Promise<{
+    institucionales: Registro[];
+    visitantes: Registro[];
+    total: number;
+  }> {
+    // Obtener todos los registros activos con relaciones
+    const registrosActivos = await this.registroRepository.find({
+      where: { estado: EstadoRegistro.ACTIVO },
+      relations: ['vehiculo', 'usuario', 'parqueadero'],
+      order: { horaEntrada: 'DESC' },
+    });
+
+    // Discriminar por tipo de propietario del vehículo
+    const institucionales = registrosActivos.filter(
+      (registro) => registro.vehiculo.tipoPropietario === 'INSTITUCIONAL',
+    );
+
+    const visitantes = registrosActivos.filter(
+      (registro) => registro.vehiculo.tipoPropietario === 'VISITANTE',
+    );
+
+    return {
+      institucionales,
+      visitantes,
+      total: registrosActivos.length,
+    };
+  }
+
   async remove(id: number): Promise<void> {
     const registro = await this.findOne(id);
 
-    // Si el registro está activo, liberar el cupo antes de eliminar
     if (registro.estado === EstadoRegistro.ACTIVO) {
-      // Obtener el vehículo para conocer su tipo
       const vehiculo = await this.vehiculoService.findOne(registro.vehiculoPlaca);
 
       await this.parqueaderoService.actualizarCuposDisponibles(
@@ -196,5 +253,96 @@ export class RegistroService {
     }
 
     await this.registroRepository.remove(registro);
+  }
+
+  async obtenerReporteCarrosPorFecha(fecha: string): Promise<{ entradas: Registro[]; salidas: Registro[] }> {
+    const entradas = await this.registroRepository
+      .createQueryBuilder('r')
+      .innerJoinAndSelect('r.vehiculo', 'v')
+      .where('v.tipo = :tipo', { tipo: 'CARRO' })
+      .andWhere('DATE("r"."horaEntrada") = :fecha', { fecha })
+      .orderBy('"r"."horaEntrada"', 'ASC')
+      .getMany();
+
+    const salidas = await this.registroRepository
+      .createQueryBuilder('r')
+      .innerJoinAndSelect('r.vehiculo', 'v')
+      .where('v.tipo = :tipo', { tipo: 'CARRO' })
+      .andWhere('"r"."horaSalida" IS NOT NULL')
+      .andWhere('DATE("r"."horaSalida") = :fecha', { fecha })
+      .orderBy('"r"."horaSalida"', 'ASC')
+      .getMany();
+
+    return { entradas, salidas };
+  }
+
+  async obtenerReporteParqueaderoPorSemana(inicio: string, fin: string): Promise<{ entradas: number; salidas: number }> {
+    const entradas = await this.registroRepository
+      .createQueryBuilder('r')
+      .where('DATE("r"."horaEntrada") BETWEEN :inicio AND :fin', { inicio, fin })
+      .getCount();
+    const salidas = await this.registroRepository
+      .createQueryBuilder('r')
+      .where('"r"."horaSalida" IS NOT NULL')
+      .andWhere('DATE("r"."horaSalida") BETWEEN :inicio AND :fin', { inicio, fin })
+      .getCount();
+    return { entradas, salidas };
+  }
+
+  async obtenerReporteParqueaderoPorMes(anio: number, mes: number): Promise<{ entradas: number; salidas: number }> {
+    const m = mes.toString().padStart(2, '0');
+    const inicio = `${anio}-${m}-01`;
+    const nextMonth = mes === 12 ? 1 : mes + 1;
+    const nextYear = mes === 12 ? anio + 1 : anio;
+    const fin = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`;
+    const entradas = await this.registroRepository
+      .createQueryBuilder('r')
+      .where('"r"."horaEntrada" >= :inicio AND "r"."horaEntrada" < :fin', { inicio, fin })
+      .getCount();
+    const salidas = await this.registroRepository
+      .createQueryBuilder('r')
+      .where('"r"."horaSalida" IS NOT NULL')
+      .andWhere('"r"."horaSalida" >= :inicio AND "r"."horaSalida" < :fin', { inicio, fin })
+      .getCount();
+    return { entradas, salidas };
+  }
+
+  async obtenerReportePorTipoVehiculoSemana(tipo: TipoVehiculo, inicio: string, fin: string): Promise<{ entradas: number; salidas: number }> {
+    const entradas = await this.registroRepository
+      .createQueryBuilder('r')
+      .innerJoin('r.vehiculo', 'v')
+      .where('v.tipo = :tipo', { tipo })
+      .andWhere('DATE("r"."horaEntrada") BETWEEN :inicio AND :fin', { inicio, fin })
+      .getCount();
+    const salidas = await this.registroRepository
+      .createQueryBuilder('r')
+      .innerJoin('r.vehiculo', 'v')
+      .where('v.tipo = :tipo', { tipo })
+      .andWhere('"r"."horaSalida" IS NOT NULL')
+      .andWhere('DATE("r"."horaSalida") BETWEEN :inicio AND :fin', { inicio, fin })
+      .getCount();
+    return { entradas, salidas };
+  }
+
+  async obtenerReportePorTipoVehiculoMes(tipo: TipoVehiculo, anio: number, mes: number): Promise<{ entradas: number; salidas: number }> {
+    const m = mes.toString().padStart(2, '0');
+    const inicio = `${anio}-${m}-01`;
+    const nextMonth = mes === 12 ? 1 : mes + 1;
+    const nextYear = mes === 12 ? anio + 1 : anio;
+    const fin = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`;
+    const entradas = await this.registroRepository
+      .createQueryBuilder('r')
+      .innerJoin('r.vehiculo', 'v')
+      .where('v.tipo = :tipo', { tipo })
+      .andWhere('"r"."horaEntrada" >= :inicio AND "r"."horaEntrada" < :fin', { inicio, fin })
+      .getCount();
+    const salidas = await this.registroRepository
+      .createQueryBuilder('r')
+      .innerJoin('r.vehiculo', 'v')
+      .where('v.tipo = :tipo', { tipo })
+      .andWhere('"r"."horaSalida" IS NOT NULL')
+      .andWhere('"r"."horaSalida" >= :inicio AND "r"."horaSalida" < :fin', { inicio, fin })
+      .getCount();
+    return { entradas, salidas };
   }
 }

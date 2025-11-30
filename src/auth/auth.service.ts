@@ -26,7 +26,7 @@ export class AuthService {
     }
 
     const passwordValid = await bcrypt.compare(
-      loginDto.contraseña,
+      loginDto.contrasena,
       usuario.claveEncriptada,
     );
 

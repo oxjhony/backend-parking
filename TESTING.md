@@ -129,7 +129,7 @@ npm test -- registro.service.spec.ts
 ```
 
 ### Pruebas E2E - Registro de Entrada Manual
-**Estado:** 🟡 18/20 PASANDO (90%)
+**Estado:** ✅ 20/20 PASANDO (100%)
 
 **Casos de prueba:**
 
@@ -158,10 +158,10 @@ npm test -- registro.service.spec.ts
 - ✅ Rechazar si no hay cupos disponibles
 - ✅ Decrementar cupos después del registro
 
-#### 🟡 Criterio 6: Visualización (1/3)
+#### ✅ Criterio 6: Visualización (3/3)
 - ✅ Incluir nuevo registro en la lista
-- ❌ Mostrar solo registros activos (filtro por query param)
-- ❌ Consultar registro específico con relaciones cargadas
+- ✅ Mostrar solo registros activos (filtro por query param)
+- ✅ Consultar registro específico con relaciones cargadas
 
 #### ✅ Escenarios de error (2/2)
 - ✅ Mensaje claro cuando parqueadero está lleno
@@ -174,17 +174,17 @@ npm run test:e2e -- registro-entrada.e2e-spec.ts --testTimeout=10000
 
 ### Issues Conocidos
 
-#### ❌ Filtro por estado en GET /registro
-**Problema:** El endpoint no filtra correctamente por query param `estado=ACTIVO`  
-**Test afectado:** `GET /registro?estado=ACTIVO - debe mostrar solo registros activos`  
-**Prioridad:** Media  
-**Solución requerida:** Implementar filtro en `registro.controller.ts`
+**Ninguno** - Todas las pruebas están pasando ✅
 
-#### ❌ Relaciones no cargadas en GET /registro/:id
-**Problema:** El endpoint no carga las relaciones (vehiculo, usuario, parqueadero)  
-**Test afectado:** `GET /registro/:id - debe permitir consultar un registro específico`  
-**Prioridad:** Media  
-**Solución requerida:** Agregar `relations` en `registro.service.ts findOne()`
+#### ✅ RESUELTO: Filtro por estado en GET /registro
+**Solución implementada:** Se agregó soporte para query param `?estado=ACTIVO` en el controlador  
+**Archivo modificado:** `src/registro/registro.controller.ts`  
+**Código:** El método `findAll()` ahora acepta un parámetro opcional `estado` que filtra los resultados
+
+#### ✅ RESUELTO: Relaciones no cargadas en GET /registro/:id
+**Solución implementada:** Se agregó carga de relaciones en el método `findOne()`  
+**Archivo modificado:** `src/registro/registro.service.ts`  
+**Código:** Se añadió `relations: ['vehiculo', 'usuario', 'parqueadero']` en la consulta
 
 ## 🔧 Troubleshooting
 

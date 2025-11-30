@@ -29,6 +29,8 @@ export class UsuarioService {
     }
 
     const claveEncriptada = await bcrypt.hash(dto.contraseña, 10);
+    console.log(claveEncriptada);
+    
     const usuario = this.usuarioRepository.create({
       nombre: dto.nombre,
       cedula: dto.cedula,
