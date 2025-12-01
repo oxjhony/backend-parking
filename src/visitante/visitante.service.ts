@@ -10,6 +10,7 @@ import { VisitanteConductor } from './entities/visitante-conductor.entity';
 import { Vehiculo } from '../vehiculo/entities/vehiculo.entity';
 import { Registro } from '../registro/entities/registro.entity';
 import { TipoPropietario } from '../vehiculo/enums/tipo-propietario.enum';
+import { TipoVehiculo } from '../vehiculo/enums/tipo-vehiculo.enum';
 import { RegistrarVisitanteDto } from './dto/registrar-visitante.dto';
 import { CreateVisitanteConductorDto } from './dto/create-visitante-conductor.dto';
 import { ParqueaderoService } from '../parqueadero/parqueadero.service';
@@ -36,10 +37,11 @@ export class VisitanteService {
    * Flujo completo:
    * 1. Valida que la fecha de caducidad no esté vencida
    * 2. Valida restricción de pico y placa
-   * 3. Valida capacidad del parqueadero
+   * 3. Valida capacidad del parqueadero según tipo de vehículo
    * 4. Crea/actualiza el conductor visitante
    * 5. Crea/actualiza el vehículo
    * 6. Crea el registro de entrada
+   * 7. Decrementa cupos disponibles
    */
   async registrarVisitante(
     dto: RegistrarVisitanteDto,
@@ -67,7 +69,7 @@ export class VisitanteService {
       );
     }
 
-    // 3. Validar capacidad del parqueadero
+    // 3. Validar capacidad del parqueadero según tipo de vehículo
     const parqueadero = await this.parqueaderoService.findOne(
       dto.parqueaderoId,
     );
@@ -78,18 +80,19 @@ export class VisitanteService {
       );
     }
 
-    // Contar registros activos en el parqueadero
-    const registrosActivos = await this.registroRepository.count({
-      where: {
-        parqueaderoId: dto.parqueaderoId,
-        horaSalida: null,
-      },
-    });
-
-    if (registrosActivos >= parqueadero.capacidad) {
-      throw new BadRequestException(
-        `El parqueadero ${parqueadero.nombre} está lleno (${registrosActivos}/${parqueadero.capacidad})`,
-      );
+    // ✅ CORREGIDO: Validar cupos según tipo de vehículo
+    if (dto.tipoVehiculo === TipoVehiculo.CARRO) {
+      if (parqueadero.cuposDisponiblesCarros <= 0) {
+        throw new BadRequestException(
+          `No hay cupos disponibles para carros en el parqueadero ${parqueadero.nombre}`,
+        );
+      }
+    } else if (dto.tipoVehiculo === TipoVehiculo.MOTO) {
+      if (parqueadero.cuposDisponiblesMotos <= 0) {
+        throw new BadRequestException(
+          `No hay cupos disponibles para motos en el parqueadero ${parqueadero.nombre}`,
+        );
+      }
     }
 
     // 4. Crear o actualizar conductor visitante
@@ -174,7 +177,14 @@ export class VisitanteService {
       motivoVisita: dto.motivoVisita,
     });
 
-    return await this.registroRepository.save(registro);
+    const savedRegistro = await this.registroRepository.save(registro);
+
+    await this.parqueaderoService.actualizarCuposDisponibles(
+      dto.parqueaderoId,
+      dto.tipoVehiculo,
+      -1,
+    );
+    return savedRegistro;
   }
 
   /**
